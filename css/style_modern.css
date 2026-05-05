@@ -921,3 +921,23 @@ th i.fa-sort {
 th:hover i.fa-sort {
     opacity: 0.6;
 }
+
+/* ===== LEADERBOARD TABS ===== */
+.leaderboard-tab.active {
+    color: var(--gray-900) !important;
+    border-bottom-color: var(--gray-900) !important;
+}
+
+.leaderboard-content {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.rank-medal {
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+}
