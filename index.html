@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club-Collab Dashboard</title>
+    <link rel="stylesheet" href="css/style_modern.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <h2><i class="fa-solid fa-users-gear"></i> Club-Collab</h2>
+            </div>
+            <nav>
+                <a href="#" class="nav-link active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+                <a href="#" class="nav-link" data-target="clubs"><i class="fa-solid fa-building"></i> Clubs</a>
+                <a href="#" class="nav-link" data-target="students"><i class="fa-solid fa-graduation-cap"></i> Students</a>
+                <a href="#" class="nav-link" data-target="equipment"><i class="fa-solid fa-camera"></i> Equipment</a>
+                <a href="#" class="nav-link" data-target="maintenance"><i class="fa-solid fa-wrench"></i> Maintenance</a>
+                <a href="#" class="nav-link" data-target="events"><i class="fa-solid fa-calendar-check"></i> Events</a>
+                <a href="#" class="nav-link" data-target="bookings"><i class="fa-solid fa-calendar-days"></i> Bookings</a>
+                <a href="#" class="nav-link" data-target="volunteers"><i class="fa-solid fa-hands-helping"></i> Volunteers</a>
+                <a href="#" class="nav-link" data-target="memberships"><i class="fa-solid fa-id-card"></i> Memberships</a>
+                <a href="#" class="nav-link" data-target="leaderboard"><i class="fa-solid fa-trophy"></i> Leaderboard</a>
+                <a href="#" class="nav-link" data-target="badges"><i class="fa-solid fa-medal"></i> Badges</a>
+                <a href="#" class="nav-link" data-target="analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+            </nav>
+        </aside>
+
+        <main class="main-content" id="mainContent">
+            <header>
+                <button class="nav-toggle" id="navToggle"><i class="fa-solid fa-bars"></i></button>
+                <div class="search-bar">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search equipment...">
+                </div>
+                <div class="user-profile">
+                    <span id="userName">Loading...</span>
+                    <div class="avatar"></div>
+                    <button id="logoutBtn" class="logout-btn" title="Logout"><i class="fa-solid fa-sign-out-alt"></i></button>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+                <div class="page-header">
+                    <h1 id="pageTitle">Equipment Dashboard</h1>
+                </div>
+
+                <section class="section active" id="section-dashboard">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-box"></i></div>
+                            <div class="card-info">
+                                <h3>Total Equipment</h3>
+                                <p id="totalEquip">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-check-circle"></i></div>
+                            <div class="card-info">
+                                <h3>Available</h3>
+                                <p id="availEquip">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="card-info">
+                                <h3>Damaged/Maintenance</h3>
+                                <p id="damagedEquip">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2>Shared Resources</h2>
+                            <button class="btn-primary" id="addEquipmentBtn"><i class="fa-solid fa-plus"></i> Add Equipment</button>
+                        </div>
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label>Status</label>
+                                <select id="filterStatus">
+                                    <option value="">All Status</option>
+                                    <option value="Available">Available</option>
+                                    <option value="In-Use">In-Use</option>
+                                    <option value="Damaged">Damaged</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Type</label>
+                                <select id="filterType">
+                                    <option value="">All Types</option>
+                                    <option value="Camera">Camera</option>
+                                    <option value="Projector">Projector</option>
+                                    <option value="Microphone">Microphone</option>
+                                    <option value="Laptop">Laptop</option>
+                                    <option value="Speaker">Speaker</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Owner Club</label>
+                                <select id="filterClub">
+                                    <option value="">All Clubs</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="equipmentTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('equipmentTable', 0)" style="cursor:pointer;">ID <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('equipmentTable', 1)" style="cursor:pointer;">Equipment Name <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('equipmentTable', 2)" style="cursor:pointer;">Type <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('equipmentTable', 3)" style="cursor:pointer;">Owner Club <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('equipmentTable', 4)" style="cursor:pointer;">Status <i class="fa-solid fa-sort"></i></th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
+                            <div id="equipmentPagination"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section" id="section-clubs">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-building"></i></div>
+                            <div class="card-info">
+                                <h3>Total Clubs</h3>
+                                <p id="totalClubs">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-user-group"></i></div>
+                            <div class="card-info">
+                                <h3>Total Members</h3>
+                                <p id="totalMembers">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-envelope"></i></div>
+                            <div class="card-info">
+                                <h3>Club Contacts</h3>
+                                <p id="clubContacts">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2>Club Directory</h2>
+                            <button class="btn-primary" id="addClubBtn"><i class="fa-solid fa-plus"></i> Add Club</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="clubsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Club Name</th>
+                                        <th>Department</th>
+                                        <th>Office</th>
+                                        <th>Founded</th>
+                                        <th>Members</th>
+                                        <th>Contact</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clubsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section" id="section-students">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-graduation-cap"></i></div>
+                            <div class="card-info">
+                                <h3>Total Students</h3>
+                                <p id="totalStudents">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-user-tie"></i></div>
+                            <div class="card-info">
+                                <h3>Executive Leaders</h3>
+                                <p id="executiveCount">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="card-info">
+                                <h3>Major Areas</h3>
+                                <p id="majorCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2>Student Roster</h2>
+                            <button class="btn-primary" id="addStudentBtn"><i class="fa-solid fa-plus"></i> Add Student</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="studentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Major</th>
+                                        <th>Year</th>
+                                        <th>Club Roles</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section" id="section-equipment">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-box"></i></div>
+                            <div class="card-info">
+                                <h3>Total Equipment</h3>
+                                <p id="totalEquip">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-check-circle"></i></div>
+                            <div class="card-info">
+                                <h3>Available</h3>
+                                <p id="availEquip">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="card-info">
+                                <h3>Damaged/Maintenance</h3>
+                                <p id="damagedEquip">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2>Equipment Inventory</h2>
+                            <button class="btn-primary" id="addEquipmentBtn"><i class="fa-solid fa-plus"></i> Add Equipment</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="equipmentTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('equipmentTable', 0)" style="cursor:pointer;">ID <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('equipmentTable', 1)" style="cursor:pointer;">Equipment Name <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('equipmentTable', 2)" style="cursor:pointer;">Type <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('equipmentTable', 3)" style="cursor:pointer;">Owner Club <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('equipmentTable', 4)" style="cursor:pointer;">Status <i class="fa-solid fa-sort"></i></th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equipmentBody"></tbody>
+                            </table>
+                            <div id="equipmentPagination"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- MAINTENANCE SECTION -->
+                <section class="section" id="section-maintenance">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-wrench"></i></div>
+                            <div class="card-info">
+                                <h3>Total Maintenance Logs</h3>
+                                <p id="totalMaintenance">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-dollar-sign"></i></div>
+                            <div class="card-info">
+                                <h3>Total Cost</h3>
+                                <p id="totalMaintenanceCost">$0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-calendar"></i></div>
+                            <div class="card-info">
+                                <h3>This Month</h3>
+                                <p id="maintenanceThisMonth">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2>Maintenance History</h2>
+                            <button class="btn-primary" id="addMaintenanceBtn"><i class="fa-solid fa-plus"></i> Log Maintenance</button>
+                        </div>
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label>Equipment</label>
+                                <select id="filterMaintenanceEquipment">
+                                    <option value="">All Equipment</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Date From</label>
+                                <input type="date" id="filterMaintenanceDateFrom">
+                            </div>
+                            <div class="filter-group">
+                                <label>Date To</label>
+                                <input type="date" id="filterMaintenanceDateTo">
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="maintenanceTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('maintenanceTable', 0)" style="cursor:pointer;">Equipment <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('maintenanceTable', 1)" style="cursor:pointer;">Date <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('maintenanceTable', 2)" style="cursor:pointer;">Description <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('maintenanceTable', 3)" style="cursor:pointer;">Cost <i class="fa-solid fa-sort"></i></th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="maintenanceBody"></tbody>
+                            </table>
+                            <div id="maintenancePagination"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section" id="section-events">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
+                            <div class="card-info">
+                                <h3>Total Events</h3>
+                                <p id="totalEvents">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-handshake"></i></div>
+                            <div class="card-info">
+                                <h3>Collaborations</h3>
+                                <p id="partnerClubs">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-ticket"></i></div>
+                            <div class="card-info">
+                                <h3>Booked Equipment</h3>
+                                <p id="bookedEquipment">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2>Upcoming Events</h2>
+                            <button class="btn-primary" id="addEventBtn"><i class="fa-solid fa-plus"></i> Add Event</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="eventsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Date</th>
+                                        <th>Venue</th>
+                                        <th>Host Club</th>
+                                        <th>Partners</th>
+                                        <th>Bookings</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="eventsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section" id="section-volunteers">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-hands-helping"></i></div>
+                            <div class="card-info">
+                                <h3>Volunteer Hours</h3>
+                                <p id="totalVolunteerHours">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-user-check"></i></div>
+                            <div class="card-info">
+                                <h3>Volunteer Logs</h3>
+                                <p id="totalVolunteerLogs">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-award"></i></div>
+                            <div class="card-info">
+                                <h3>Verified By</h3>
+                                <p id="verifiedCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2>Volunteer Activity</h2>
+                        </div>
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label>Student</label>
+                                <select id="filterVolunteerStudent">
+                                    <option value="">All Students</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Event</label>
+                                <select id="filterVolunteerEvent">
+                                    <option value="">All Events</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Date From</label>
+                                <input type="date" id="filterVolunteerDateFrom">
+                            </div>
+                            <div class="filter-group">
+                                <label>Date To</label>
+                                <input type="date" id="filterVolunteerDateTo">
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="volunteersTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('volunteersTable', 0)" style="cursor:pointer;">ID <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('volunteersTable', 1)" style="cursor:pointer;">Student <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('volunteersTable', 2)" style="cursor:pointer;">Event <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('volunteersTable', 3)" style="cursor:pointer;">Role <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('volunteersTable', 4)" style="cursor:pointer;">Hours <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('volunteersTable', 5)" style="cursor:pointer;">Verified By <i class="fa-solid fa-sort"></i></th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="volunteersBody"></tbody>
+                            </table>
+                            <div id="volunteersPagination"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- MEMBERSHIPS SECTION -->
+                <section class="section" id="section-memberships">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-id-card"></i></div>
+                            <div class="card-info">
+                                <h3>Total Memberships</h3>
+                                <p id="totalMemberships">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-user-tie"></i></div>
+                            <div class="card-info">
+                                <h3>Executives</h3>
+                                <p id="executiveMemberships">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-users"></i></div>
+                            <div class="card-info">
+                                <h3>Active Members</h3>
+                                <p id="activeMemberships">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2>Club Memberships</h2>
+                            <button class="btn-primary" id="addMembershipBtn"><i class="fa-solid fa-plus"></i> Add Membership</button>
+                        </div>
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label>Club</label>
+                                <select id="filterMembershipClub">
+                                    <option value="">All Clubs</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Student</label>
+                                <select id="filterMembershipStudent">
+                                    <option value="">All Students</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Role</label>
+                                <select id="filterMembershipRole">
+                                    <option value="">All Roles</option>
+                                    <option value="Member">Member</option>
+                                    <option value="Volunteer">Volunteer</option>
+                                    <option value="Executive">Executive</option>
+                                    <option value="Advisor">Advisor</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="membershipsTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('membershipsTable', 0)" style="cursor:pointer;">Student <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('membershipsTable', 1)" style="cursor:pointer;">Club <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('membershipsTable', 2)" style="cursor:pointer;">Role <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('membershipsTable', 3)" style="cursor:pointer;">Join Date <i class="fa-solid fa-sort"></i></th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="membershipsBody"></tbody>
+                            </table>
+                            <div id="membershipsPagination"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- LEADERBOARD SECTION -->
+                <section class="section" id="section-leaderboard">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-trophy"></i></div>
+                            <div class="card-info">
+                                <h3>Total Volunteers</h3>
+                                <p id="leaderboardTotalVolunteers">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-clock"></i></div>
+                            <div class="card-info">
+                                <h3>Total Hours Logged</h3>
+                                <p id="leaderboardTotalHours">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-crown"></i></div>
+                            <div class="card-info">
+                                <h3>Top Volunteer</h3>
+                                <p id="leaderboardTopVolunteer">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2><i class="fa-solid fa-ranking-star"></i> Volunteer Leaderboard</h2>
+                            <button class="btn-primary" onclick="fetchLeaderboard()"><i class="fa-solid fa-refresh"></i> Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="leaderboardTableMain">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('leaderboardTableMain', 0)" style="cursor:pointer;">Rank <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 1)" style="cursor:pointer;">Student <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 2)" style="cursor:pointer;">Total Hours <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 3)" style="cursor:pointer;">Events <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 4)" style="cursor:pointer;">Badges Earned <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 5)" style="cursor:pointer;">Highest Tier <i class="fa-solid fa-sort"></i></th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboardBodyMain"></tbody>
+                            </table>
+                            <div id="leaderboardPagination"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BOOKINGS SECTION -->
+                <section class="section" id="section-bookings">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-calendar-days"></i></div>
+                            <div class="card-info">
+                                <h3>Total Bookings</h3>
+                                <p id="totalBookings">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-check-circle"></i></div>
+                            <div class="card-info">
+                                <h3>Confirmed</h3>
+                                <p id="confirmedBookings">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-exclamation-triangle"></i></div>
+                            <div class="card-info">
+                                <h3>Conflicts</h3>
+                                <p id="conflictBookings">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2>Resource Bookings</h2>
+                            <button class="btn-primary" id="addBookingBtn"><i class="fa-solid fa-plus"></i> Book Equipment</button>
+                        </div>
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label>Status</label>
+                                <select id="filterBookingStatus">
+                                    <option value="">All Status</option>
+                                    <option value="Confirmed">Confirmed</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Equipment</label>
+                                <select id="filterBookingEquipment">
+                                    <option value="">All Equipment</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Event</label>
+                                <select id="filterBookingEvent">
+                                    <option value="">All Events</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="bookingsTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('bookingsTable', 0)" style="cursor:pointer;">ID <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('bookingsTable', 1)" style="cursor:pointer;">Equipment <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('bookingsTable', 2)" style="cursor:pointer;">Event <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('bookingsTable', 3)" style="cursor:pointer;">Borrow Time <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('bookingsTable', 4)" style="cursor:pointer;">Return Time <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('bookingsTable', 5)" style="cursor:pointer;">Status <i class="fa-solid fa-sort"></i></th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bookingsBody"></tbody>
+                            </table>
+                            <div id="bookingsPagination"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BADGES SECTION -->
+                <section class="section" id="section-badges">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-trophy"></i></div>
+                            <div class="card-info">
+                                <h3>Total Badges</h3>
+                                <p id="totalBadges">20</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-users"></i></div>
+                            <div class="card-info">
+                                <h3>Active Volunteers</h3>
+                                <p id="activeVolunteers">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-crown"></i></div>
+                            <div class="card-info">
+                                <h3>Top Tier Achievers</h3>
+                                <p id="topTierCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Badge Leaderboard -->
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2><i class="fa-solid fa-ranking-star"></i> Volunteer Leaderboard</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="leaderboardTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('leaderboardTable', 0)" style="cursor:pointer;">Rank <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTable', 1)" style="cursor:pointer;">Student <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTable', 2)" style="cursor:pointer;">Total Hours <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTable', 3)" style="cursor:pointer;">Events <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTable', 4)" style="cursor:pointer;">Badges Earned <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTable', 5)" style="cursor:pointer;">Highest Tier <i class="fa-solid fa-sort"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leaderboardBody"></tbody>
+                            </table>
+                            <div id="badgesPagination"></div>
+                        </div>
+                    </div>
+
+                    <!-- All Badges Display -->
+                    <div class="table-container" style="margin-top: 2rem;">
+                        <div class="table-header">
+                            <h2><i class="fa-solid fa-medal"></i> All Badges</h2>
+                            <div class="filters" style="border: none; padding: 0;">
+                                <div class="filter-group">
+                                    <label>Tier</label>
+                                    <select id="filterBadgeTier">
+                                        <option value="">All Tiers</option>
+                                        <option value="Bronze">Bronze</option>
+                                        <option value="Silver">Silver</option>
+                                        <option value="Gold">Gold</option>
+                                        <option value="Platinum">Platinum</option>
+                                        <option value="Diamond">Diamond</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="badgesGrid" class="badges-grid"></div>
+                    </div>
+                </section>
+
+                <!-- ANALYTICS SECTION -->
+                <section class="section" id="section-analytics">
+                    <div class="analytics-header">
+                        <h2><i class="fa-solid fa-chart-line"></i> Analytics & Reports</h2>
+                        <div class="analytics-tabs">
+                            <button class="tab-btn active" data-tab="equipment-util">Equipment Utilization</button>
+                            <button class="tab-btn" data-tab="club-collab">Club Collaboration</button>
+                            <button class="tab-btn" data-tab="event-success">Event Success</button>
+                            <button class="tab-btn" data-tab="engagement">Student Engagement</button>
+                            <button class="tab-btn" data-tab="booking-patterns">Booking Patterns</button>
+                        </div>
+                    </div>
+
+                    <!-- Equipment Utilization Tab -->
+                    <div class="analytics-tab-content active" id="tab-equipment-util">
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h3>Equipment Utilization Analysis</h3>
+                                <button class="btn-primary" onclick="loadEquipmentUtilization()"><i class="fa-solid fa-refresh"></i> Refresh</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="equipUtilTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Equipment</th>
+                                            <th>Type</th>
+                                            <th>Owner Club</th>
+                                            <th>Total Bookings</th>
+                                            <th>Hours Booked</th>
+                                            <th>Maintenance Cost</th>
+                                            <th>ROI Rating</th>
+                                            <th>Recommendation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="equipUtilBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Club Collaboration Tab -->
+                    <div class="analytics-tab-content" id="tab-club-collab">
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h3>Club Collaboration Network</h3>
+                                <button class="btn-primary" onclick="loadClubCollaboration()"><i class="fa-solid fa-refresh"></i> Refresh</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="clubCollabTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Club 1</th>
+                                            <th>Club 2</th>
+                                            <th>Collaborations</th>
+                                            <th>Shared Equipment</th>
+                                            <th>Partnership Strength</th>
+                                            <th>Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="clubCollabBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Success Tab -->
+                    <div class="analytics-tab-content" id="tab-event-success">
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h3>Event Success Metrics</h3>
+                                <button class="btn-primary" onclick="loadEventSuccess()"><i class="fa-solid fa-refresh"></i> Refresh</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="eventSuccessTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Event</th>
+                                            <th>Date</th>
+                                            <th>Primary Club</th>
+                                            <th>Volunteers</th>
+                                            <th>Partners</th>
+                                            <th>Equipment Used</th>
+                                            <th>Scale</th>
+                                            <th>Success Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="eventSuccessBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Student Engagement Tab -->
+                    <div class="analytics-tab-content" id="tab-engagement">
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h3>Student Engagement Ranking</h3>
+                                <button class="btn-primary" onclick="loadStudentEngagement()"><i class="fa-solid fa-refresh"></i> Refresh</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="engagementTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Total Hours</th>
+                                            <th>Events</th>
+                                            <th>Clubs</th>
+                                            <th>Executive</th>
+                                            <th>Roles</th>
+                                            <th>Score</th>
+                                            <th>Category</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="engagementBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booking Patterns Tab -->
+                    <div class="analytics-tab-content" id="tab-booking-patterns">
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h3>Booking Pattern Analysis</h3>
+                                <button class="btn-primary" onclick="loadBookingPatterns()"><i class="fa-solid fa-refresh"></i> Refresh</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="bookingPatternsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Day of Week</th>
+                                            <th>Hour</th>
+                                            <th>Equipment Type</th>
+                                            <th>Booking Count</th>
+                                            <th>Avg Duration (hrs)</th>
+                                            <th>Demand Level</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bookingPatternsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- CRUD Modal -->
+    <div id="crudModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add/Edit Item</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="crudForm">
+                    <!-- Dynamic form fields will be inserted here -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="modalCancel">Cancel</button>
+                <button type="submit" form="crudForm" class="btn-primary" id="modalSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/features_complete.js"></script>
+</body>
+</html>
