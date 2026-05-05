@@ -25,6 +25,7 @@
                 <a href="#" class="nav-link" data-target="memberships"><i class="fa-solid fa-id-card"></i> Memberships</a>
                 <a href="#" class="nav-link" data-target="leaderboard"><i class="fa-solid fa-trophy"></i> Leaderboard</a>
                 <a href="#" class="nav-link" data-target="badges"><i class="fa-solid fa-medal"></i> Badges</a>
+                <a href="#" class="nav-link" data-target="bidding"><i class="fa-solid fa-gavel"></i> Equipment Bidding</a>
                 <a href="#" class="nav-link" data-target="analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
             </nav>
         </aside>
@@ -555,7 +556,18 @@
                         </div>
                     </div>
 
-                    <div class="table-container">
+                    <!-- Leaderboard Tabs -->
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--gray-200);">
+                        <button class="leaderboard-tab active" onclick="switchLeaderboardTab('volunteers')" data-tab="volunteers" style="padding: 1rem 2rem; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--gray-600); border-bottom: 3px solid transparent; transition: all 0.3s;">
+                            <i class="fa-solid fa-user"></i> Top Volunteers
+                        </button>
+                        <button class="leaderboard-tab" onclick="switchLeaderboardTab('clubs')" data-tab="clubs" style="padding: 1rem 2rem; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--gray-600); border-bottom: 3px solid transparent; transition: all 0.3s;">
+                            <i class="fa-solid fa-building"></i> Top Clubs
+                        </button>
+                    </div>
+
+                    <!-- Volunteers Leaderboard -->
+                    <div class="table-container leaderboard-content" id="leaderboard-volunteers">
                         <div class="table-header">
                             <h2><i class="fa-solid fa-ranking-star"></i> Volunteer Leaderboard</h2>
                             <button class="btn-primary" onclick="fetchLeaderboard()"><i class="fa-solid fa-refresh"></i> Refresh</button>
@@ -566,16 +578,41 @@
                                     <tr>
                                         <th onclick="sortTable('leaderboardTableMain', 0)" style="cursor:pointer;">Rank <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="sortTable('leaderboardTableMain', 1)" style="cursor:pointer;">Student <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="sortTable('leaderboardTableMain', 2)" style="cursor:pointer;">Total Hours <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="sortTable('leaderboardTableMain', 3)" style="cursor:pointer;">Events <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="sortTable('leaderboardTableMain', 4)" style="cursor:pointer;">Badges Earned <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="sortTable('leaderboardTableMain', 5)" style="cursor:pointer;">Highest Tier <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 2)" style="cursor:pointer;">Club <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 3)" style="cursor:pointer;">Total Hours <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 4)" style="cursor:pointer;">Events <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 5)" style="cursor:pointer;">Badges <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('leaderboardTableMain', 6)" style="cursor:pointer;">Highest Tier <i class="fa-solid fa-sort"></i></th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="leaderboardBodyMain"></tbody>
                             </table>
                             <div id="leaderboardPagination"></div>
+                        </div>
+                    </div>
+
+                    <!-- Clubs Leaderboard -->
+                    <div class="table-container leaderboard-content" id="leaderboard-clubs" style="display: none;">
+                        <div class="table-header">
+                            <h2><i class="fa-solid fa-trophy"></i> Club Currency Leaderboard</h2>
+                            <button class="btn-primary" onclick="fetchClubLeaderboard()"><i class="fa-solid fa-refresh"></i> Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="clubLeaderboardTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('clubLeaderboardTable', 0)" style="cursor:pointer;">Rank <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('clubLeaderboardTable', 1)" style="cursor:pointer;">Club Name <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('clubLeaderboardTable', 2)" style="cursor:pointer;">Currency <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('clubLeaderboardTable', 3)" style="cursor:pointer;">Members <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('clubLeaderboardTable', 4)" style="cursor:pointer;">Volunteer Hours <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('clubLeaderboardTable', 5)" style="cursor:pointer;">Badges <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="sortTable('clubLeaderboardTable', 6)" style="cursor:pointer;">Equipment <i class="fa-solid fa-sort"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clubLeaderboardBody"></tbody>
+                            </table>
                         </div>
                     </div>
                 </section>
@@ -868,8 +905,148 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- BIDDING SECTION -->
+                <section class="section" id="section-bidding">
+                    <div class="kpi-cards">
+                        <div class="card">
+                            <div class="card-icon blue"><i class="fa-solid fa-coins"></i></div>
+                            <div class="card-info">
+                                <h3>Your Club Balance</h3>
+                                <p id="biddingClubBalance">0 Coins</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon green"><i class="fa-solid fa-gavel"></i></div>
+                            <div class="card-info">
+                                <h3>Active Auctions</h3>
+                                <p id="biddingActiveCount">0</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon red"><i class="fa-solid fa-fire"></i></div>
+                            <div class="card-info">
+                                <h3>Your Active Bids</h3>
+                                <p id="biddingMyBidsCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bidding Tabs -->
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--gray-200);">
+                        <button class="bidding-tab active" onclick="switchBiddingTab('active-auctions')" data-tab="active-auctions" style="padding: 1rem 2rem; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--gray-600); border-bottom: 3px solid transparent; transition: all 0.3s;">
+                            <i class="fa-solid fa-fire"></i> Active Auctions
+                        </button>
+                        <button class="bidding-tab" onclick="switchBiddingTab('my-auctions')" data-tab="my-auctions" style="padding: 1rem 2rem; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--gray-600); border-bottom: 3px solid transparent; transition: all 0.3s;">
+                            <i class="fa-solid fa-list"></i> My Auctions
+                        </button>
+                        <button class="bidding-tab" onclick="switchBiddingTab('my-bids')" data-tab="my-bids" style="padding: 1rem 2rem; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--gray-600); border-bottom: 3px solid transparent; transition: all 0.3s;">
+                            <i class="fa-solid fa-hand-holding-usd"></i> My Bids
+                        </button>
+                        <button class="bidding-tab" onclick="switchBiddingTab('club-leaderboard')" data-tab="club-leaderboard" style="padding: 1rem 2rem; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: var(--gray-600); border-bottom: 3px solid transparent; transition: all 0.3s;">
+                            <i class="fa-solid fa-trophy"></i> Club Rankings
+                        </button>
+                    </div>
+
+                    <!-- Active Auctions Tab -->
+                    <div class="bidding-content" id="bidding-active-auctions">
+                        <div class="table-header">
+                            <h2>Active Auctions</h2>
+                            <button class="btn-primary" onclick="openCreateAuctionModal()"><i class="fa-solid fa-plus"></i> Create Auction</button>
+                        </div>
+                        <div id="activeAuctionsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;"></div>
+                    </div>
+
+                    <!-- My Auctions Tab -->
+                    <div class="bidding-content" id="bidding-my-auctions" style="display: none;">
+                        <div class="table-header">
+                            <h2>My Auctions</h2>
+                        </div>
+                        <div id="myAuctionsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;"></div>
+                    </div>
+
+                    <!-- My Bids Tab -->
+                    <div class="bidding-content" id="bidding-my-bids" style="display: none;">
+                        <div class="table-header">
+                            <h2>My Bids</h2>
+                        </div>
+                        <div id="myBidsList" style="margin-top: 1.5rem;"></div>
+                    </div>
+
+                    <!-- Club Leaderboard Tab -->
+                    <div class="bidding-content" id="bidding-club-leaderboard" style="display: none;">
+                        <div class="table-header">
+                            <h2>Club Currency Leaderboard</h2>
+                            <button class="btn-primary" onclick="loadBiddingClubLeaderboard()"><i class="fa-solid fa-refresh"></i> Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="biddingClubLeaderboardTable">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Club Name</th>
+                                        <th>Currency Balance</th>
+                                        <th>Members</th>
+                                        <th>Volunteer Hours</th>
+                                        <th>Badges Earned</th>
+                                        <th>Equipment Owned</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="biddingClubLeaderboardBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
             </div>
         </main>
+    </div>
+
+    <!-- Create Auction Modal -->
+    <div id="createAuctionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Equipment Auction</h2>
+                <button class="modal-close" onclick="closeCreateAuctionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createAuctionForm">
+                    <div class="form-row">
+                        <label>Select Equipment</label>
+                        <select id="auctionEquipment" required>
+                            <option value="">Select equipment...</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label>Starting Price (Coins)</label>
+                        <input type="number" id="startingPrice" min="10" step="10" required>
+                    </div>
+                    <div class="form-row">
+                        <label>Auction Duration</label>
+                        <select id="auctionDuration" required>
+                            <option value="6">6 Hours</option>
+                            <option value="12">12 Hours</option>
+                            <option value="24" selected>24 Hours</option>
+                            <option value="48">48 Hours</option>
+                            <option value="72">72 Hours</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">Create Auction</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bid History Modal -->
+    <div id="bidHistoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Bid History</h2>
+                <button class="modal-close" onclick="closeBidHistoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="bidHistoryList" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
     </div>
 
     <!-- CRUD Modal -->

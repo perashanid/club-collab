@@ -164,6 +164,7 @@ function switchSection(target) {
         memberships: 'Club Memberships',
         leaderboard: 'Volunteer Leaderboard',
         badges: 'Volunteer Badges & Leaderboard',
+        bidding: 'Equipment Bidding',
         analytics: 'Analytics & Reports'
     };
 
@@ -177,6 +178,21 @@ function switchSection(target) {
             loadEventSuccess();
             loadStudentEngagement();
             loadBookingPatterns();
+        }, 100);
+    }
+    
+    // Auto-load leaderboard data when leaderboard section is opened
+    if (target === 'leaderboard') {
+        setTimeout(() => {
+            fetchLeaderboard();
+            fetchClubLeaderboard();
+        }, 100);
+    }
+    
+    // Auto-load bidding data when bidding section is opened
+    if (target === 'bidding') {
+        setTimeout(() => {
+            loadBiddingData();
         }, 100);
     }
 }
@@ -1250,7 +1266,7 @@ function addEquipment() {
     document.getElementById('crudForm').dataset.method = 'POST';
 
     document.getElementById('modalTitle').textContent = 'Add New Equipment';
-    document.getElementById('crudModal').style.display = 'block';
+    document.getElementById('crudModal').style.display = 'flex';
 }
 
 function addBooking() {
@@ -1301,7 +1317,7 @@ function addBooking() {
     document.getElementById('crudForm').dataset.method = 'POST';
 
     document.getElementById('modalTitle').textContent = 'Add New Booking';
-    document.getElementById('crudModal').style.display = 'block';
+    document.getElementById('crudModal').style.display = 'flex';
 }
 
 // Check equipment availability and show next available time
@@ -1484,6 +1500,7 @@ function renderLeaderboard(data) {
                         ${item.Name}
                     </a>
                 </td>
+                <td>${item.Club_Name || 'No Club'}</td>
                 <td>${item.Total_Hours || 0}</td>
                 <td>${item.Events_Count || 0}</td>
                 <td>
@@ -1523,6 +1540,83 @@ function updateLeaderboardKPIs(data) {
     if (totalVolEl) totalVolEl.textContent = totalVolunteers;
     if (totalHoursEl) totalHoursEl.textContent = totalHours.toFixed(1);
     if (topVolEl) topVolEl.textContent = topVolunteer;
+}
+
+// Switch between volunteer and club leaderboard tabs
+function switchLeaderboardTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.leaderboard-tab').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.color = 'var(--gray-600)';
+        btn.style.borderBottomColor = 'transparent';
+    });
+    
+    const activeTab = document.querySelector(`.leaderboard-tab[data-tab="${tab}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+        activeTab.style.color = 'var(--gray-900)';
+        activeTab.style.borderBottomColor = 'var(--gray-900)';
+    }
+    
+    // Update content visibility
+    document.querySelectorAll('.leaderboard-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    const activeContent = document.getElementById(`leaderboard-${tab}`);
+    if (activeContent) {
+        activeContent.style.display = 'block';
+    }
+    
+    // Load data for the tab
+    if (tab === 'clubs') {
+        fetchClubLeaderboard();
+    } else {
+        fetchLeaderboard();
+    }
+}
+
+// Fetch club leaderboard
+async function fetchClubLeaderboard() {
+    try {
+        const response = await fetch('backend/bidding_api.php?action=get_currency_leaderboard');
+        const data = await response.json();
+        if (data.success && data.leaderboard) {
+            renderClubLeaderboard(data.leaderboard);
+        }
+    } catch (error) {
+        console.error('Error fetching club leaderboard:', error);
+    }
+}
+
+// Render club leaderboard
+function renderClubLeaderboard(data) {
+    const tbody = document.getElementById('clubLeaderboardBody');
+    
+    if (!tbody) return;
+    
+    if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No club data available.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    data.forEach((club, index) => {
+        const rank = index + 1;
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><span class="rank-medal">${medal}</span> ${rank}</td>
+            <td style="font-weight: 600;">${club.Club_Name}</td>
+            <td style="font-weight: bold; color: #FFD700;">${Math.floor(club.Currency_Balance)} Coins</td>
+            <td>${club.Total_Members}</td>
+            <td>${parseFloat(club.Total_Volunteer_Hours).toFixed(1)} hrs</td>
+            <td>${club.Total_Badges_Earned}</td>
+            <td>${club.Equipment_Owned}</td>
+        `;
+        tbody.appendChild(row);
+    });
 }
 
 function updateBadgeSummary() {
@@ -2159,3 +2253,475 @@ fetchAllData = async function() {
     await originalFetchAllData();
     setTimeout(initializeFilters, 500);
 };
+
+
+// ===== BIDDING FUNCTIONS =====
+let currentBiddingClubId = 1; // Default to first club
+let biddingEquipment = [];
+
+async function loadBiddingData() {
+    await loadBiddingClubBalance();
+    await loadBiddingActiveAuctions();
+    await loadBiddingClubLeaderboard();
+    populateBiddingEquipmentSelect();
+}
+
+async function loadBiddingClubBalance() {
+    try {
+        const response = await fetch(`backend/bidding_api.php?action=get_club_currency&club_id=${currentBiddingClubId}`);
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('biddingClubBalance').textContent = Math.floor(data.balance) + ' Coins';
+        }
+    } catch (error) {
+        console.error('Error loading club balance:', error);
+    }
+}
+
+async function loadBiddingActiveAuctions() {
+    try {
+        await fetch('backend/bidding_api.php?action=complete_expired_auctions');
+        const response = await fetch('backend/bidding_api.php?action=get_active_auctions');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('biddingActiveCount').textContent = data.auctions.length;
+            displayBiddingActiveAuctions(data.auctions);
+        }
+    } catch (error) {
+        console.error('Error loading auctions:', error);
+    }
+}
+
+function displayBiddingActiveAuctions(auctions) {
+    const grid = document.getElementById('activeAuctionsGrid');
+    
+    if (!auctions || auctions.length === 0) {
+        grid.innerHTML = '<p style="text-align: center; color: var(--gray-600); padding: 2rem; grid-column: 1/-1;">No active auctions at the moment.</p>';
+        return;
+    }
+    
+    grid.innerHTML = auctions.map(auction => {
+        const hoursRemaining = parseInt(auction.Hours_Remaining);
+        const isUrgent = hoursRemaining < 2;
+        const minBid = auction.Current_Highest_Bid ? parseFloat(auction.Current_Highest_Bid) + 10 : parseFloat(auction.Starting_Price);
+        const clubName = clubs.find(c => c.Club_ID == currentBiddingClubId)?.Name || '';
+        const isMyAuction = auction.Owner_Club === clubName;
+        
+        return `
+            <div class="card" style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">${auction.Equipment_Name}</h3>
+                        <span class="badge" style="background: var(--gray-100); color: var(--gray-700); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.875rem;">${auction.Equipment_Type}</span>
+                    </div>
+                </div>
+                
+                <div style="margin: 1rem 0;">
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
+                        <span style="color: var(--gray-600); font-size: 0.875rem;">Owner Club</span>
+                        <span style="font-weight: 600;">${auction.Owner_Club}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
+                        <span style="color: var(--gray-600); font-size: 0.875rem;">Starting Price</span>
+                        <span style="font-weight: 600;">${Math.floor(auction.Starting_Price)} Coins</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
+                        <span style="color: var(--gray-600); font-size: 0.875rem;">Current Bid</span>
+                        <span style="font-weight: 600; color: #FFD700; font-size: 1.25rem;">
+                            ${auction.Current_Highest_Bid ? Math.floor(auction.Current_Highest_Bid) + ' Coins' : 'No bids yet'}
+                        </span>
+                    </div>
+                    ${auction.Highest_Bidder_Club ? `
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
+                        <span style="color: var(--gray-600); font-size: 0.875rem;">Leading Bidder</span>
+                        <span style="font-weight: 600;">${auction.Highest_Bidder_Club}</span>
+                    </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                        <span style="color: var(--gray-600); font-size: 0.875rem;">Total Bids</span>
+                        <span style="font-weight: 600;">${auction.Total_Bids}</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: ${isUrgent ? '#FEE' : 'var(--gray-50)'}; border-radius: 8px; margin: 1rem 0; color: ${isUrgent ? '#C00' : 'inherit'};">
+                    <i class="fas fa-clock"></i>
+                    <span>${hoursRemaining > 0 ? hoursRemaining + ' hours' : 'Less than 1 hour'} remaining</span>
+                </div>
+                
+                ${!isMyAuction ? `
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <input type="number" 
+                           class="form-control" 
+                           id="bid-${auction.Auction_ID}" 
+                           placeholder="Min: ${Math.floor(minBid)} coins"
+                           min="${Math.floor(minBid)}"
+                           step="10"
+                           style="flex: 1; padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: 8px;">
+                    <button class="btn-primary" onclick="placeBiddingBid(${auction.Auction_ID})" style="padding: 0.75rem 1.5rem;">
+                        <i class="fas fa-gavel"></i> Bid
+                    </button>
+                </div>
+                ` : '<p style="text-align: center; color: var(--gray-600); margin-top: 1rem;">Your auction</p>'}
+                
+                <button onclick="viewBiddingBidHistory(${auction.Auction_ID})" class="btn-secondary" style="width: 100%; margin-top: 0.5rem; padding: 0.5rem;">
+                    View Bid History
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+async function placeBiddingBid(auctionId) {
+    const bidInput = document.getElementById(`bid-${auctionId}`);
+    const bidAmount = parseFloat(bidInput.value);
+    
+    if (!bidAmount || bidAmount <= 0) {
+        alert('Please enter a valid bid amount');
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'place_bid');
+        formData.append('auction_id', auctionId);
+        formData.append('club_id', currentBiddingClubId);
+        formData.append('bid_amount', bidAmount);
+        
+        const response = await fetch('backend/bidding_api.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Bid placed successfully!');
+            bidInput.value = '';
+            loadBiddingActiveAuctions();
+            loadBiddingClubBalance();
+        } else {
+            alert(data.message || 'Failed to place bid');
+        }
+    } catch (error) {
+        console.error('Error placing bid:', error);
+        alert('An error occurred while placing bid');
+    }
+}
+
+async function viewBiddingBidHistory(auctionId) {
+    try {
+        const response = await fetch(`backend/bidding_api.php?action=get_bid_history&auction_id=${auctionId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayBiddingBidHistory(data.bids);
+            document.getElementById('bidHistoryModal').style.display = 'flex';
+        }
+    } catch (error) {
+        console.error('Error loading bid history:', error);
+    }
+}
+
+function displayBiddingBidHistory(bids) {
+    const list = document.getElementById('bidHistoryList');
+    
+    if (!bids || bids.length === 0) {
+        list.innerHTML = '<p style="text-align: center; padding: 2rem; color: var(--gray-600);">No bids yet</p>';
+        return;
+    }
+    
+    list.innerHTML = bids.map((bid, index) => `
+        <div style="display: flex; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid var(--gray-100); ${index === 0 ? 'background: #FFF9E6; font-weight: bold;' : ''}">
+            <div>
+                <div style="font-weight: 600;">${bid.Club_Name}</div>
+                <div style="font-size: 0.875rem; color: var(--gray-600);">
+                    ${new Date(bid.Bid_Time).toLocaleString()}
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 1.25rem; font-weight: bold;">${Math.floor(bid.Bid_Amount)} Coins</div>
+                <span class="badge" style="background: ${bid.Status === 'Active' ? '#E6F7FF' : bid.Status === 'Won' ? '#E6FFE6' : '#FFE6E6'}; color: ${bid.Status === 'Active' ? '#0066CC' : bid.Status === 'Won' ? '#00AA00' : '#CC0000'}; padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.875rem;">${bid.Status}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function closeBidHistoryModal() {
+    document.getElementById('bidHistoryModal').style.display = 'none';
+}
+
+async function loadBiddingClubLeaderboard() {
+    try {
+        const response = await fetch('backend/bidding_api.php?action=get_currency_leaderboard');
+        const data = await response.json();
+        
+        if (data.success) {
+            displayBiddingClubLeaderboard(data.leaderboard);
+        }
+    } catch (error) {
+        console.error('Error loading club leaderboard:', error);
+    }
+}
+
+function displayBiddingClubLeaderboard(leaderboard) {
+    const tbody = document.getElementById('biddingClubLeaderboardBody');
+    
+    if (!tbody) return;
+    
+    if (!leaderboard || leaderboard.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No club data available.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    leaderboard.forEach((club, index) => {
+        const rank = index + 1;
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><span style="font-size: 1.25rem; margin-right: 0.5rem;">${medal}</span> ${rank}</td>
+            <td style="font-weight: 600;">${club.Club_Name}</td>
+            <td style="font-weight: bold; color: #FFD700;">${Math.floor(club.Currency_Balance)} Coins</td>
+            <td>${club.Total_Members}</td>
+            <td>${parseFloat(club.Total_Volunteer_Hours).toFixed(1)} hrs</td>
+            <td>${club.Total_Badges_Earned}</td>
+            <td>${club.Equipment_Owned}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function switchBiddingTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.bidding-tab').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.color = 'var(--gray-600)';
+        btn.style.borderBottomColor = 'transparent';
+    });
+    
+    const activeTab = document.querySelector(`.bidding-tab[data-tab="${tab}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+        activeTab.style.color = 'var(--gray-900)';
+        activeTab.style.borderBottomColor = 'var(--gray-900)';
+    }
+    
+    // Update content visibility
+    document.querySelectorAll('.bidding-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    const activeContent = document.getElementById(`bidding-${tab}`);
+    if (activeContent) {
+        activeContent.style.display = 'block';
+    }
+    
+    // Load data for the tab
+    if (tab === 'my-auctions') {
+        loadMyBiddingAuctions();
+    } else if (tab === 'my-bids') {
+        loadMyBiddingBids();
+    } else if (tab === 'club-leaderboard') {
+        loadBiddingClubLeaderboard();
+    }
+}
+
+async function loadMyBiddingAuctions() {
+    try {
+        const response = await fetch(`backend/bidding_api.php?action=get_my_auctions&club_id=${currentBiddingClubId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayMyBiddingAuctions(data.auctions);
+        }
+    } catch (error) {
+        console.error('Error loading my auctions:', error);
+    }
+}
+
+function displayMyBiddingAuctions(auctions) {
+    const grid = document.getElementById('myAuctionsGrid');
+    
+    if (!auctions || auctions.length === 0) {
+        grid.innerHTML = '<p style="text-align: center; color: var(--gray-600); padding: 2rem; grid-column: 1/-1;">You haven\'t created any auctions yet.</p>';
+        return;
+    }
+    
+    grid.innerHTML = auctions.map(auction => `
+        <div class="card" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div>
+                    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">${auction.Equipment_Name}</h3>
+                    <span class="badge" style="background: var(--gray-100); padding: 0.25rem 0.75rem; border-radius: 6px;">${auction.Type}</span>
+                </div>
+                <span class="badge" style="background: ${auction.Status === 'Active' ? '#E6F7FF' : '#FFE6E6'}; color: ${auction.Status === 'Active' ? '#0066CC' : '#CC0000'}; padding: 0.25rem 0.75rem; border-radius: 6px;">${auction.Status}</span>
+            </div>
+            
+            <div style="margin: 1rem 0;">
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
+                    <span style="color: var(--gray-600);">Current Bid</span>
+                    <span style="font-weight: 600; color: #FFD700; font-size: 1.25rem;">
+                        ${auction.Current_Highest_Bid ? Math.floor(auction.Current_Highest_Bid) + ' Coins' : 'No bids'}
+                    </span>
+                </div>
+                ${auction.Highest_Bidder_Club ? `
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
+                    <span style="color: var(--gray-600);">Leading Bidder</span>
+                    <span style="font-weight: 600;">${auction.Highest_Bidder_Club}</span>
+                </div>
+                ` : ''}
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                    <span style="color: var(--gray-600);">Ends</span>
+                    <span style="font-weight: 600;">${new Date(auction.Auction_End).toLocaleString()}</span>
+                </div>
+            </div>
+            
+            ${auction.Status === 'Active' ? `
+            <button onclick="cancelBiddingAuction(${auction.Auction_ID})" class="btn-secondary" style="width: 100%; margin-top: 1rem; background: #CC0000; color: white;">
+                Cancel Auction
+            </button>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+async function loadMyBiddingBids() {
+    try {
+        const response = await fetch(`backend/bidding_api.php?action=get_my_bids&club_id=${currentBiddingClubId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('biddingMyBidsCount').textContent = data.bids.filter(b => b.Status === 'Active').length;
+            displayMyBiddingBids(data.bids);
+        }
+    } catch (error) {
+        console.error('Error loading my bids:', error);
+    }
+}
+
+function displayMyBiddingBids(bids) {
+    const list = document.getElementById('myBidsList');
+    
+    if (!bids || bids.length === 0) {
+        list.innerHTML = '<p style="text-align: center; color: var(--gray-600); padding: 2rem;">You haven\'t placed any bids yet.</p>';
+        return;
+    }
+    
+    list.innerHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">' + bids.map(bid => `
+        <div class="card" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div>
+                    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">${bid.Equipment_Name}</h3>
+                    <span class="badge" style="background: var(--gray-100); padding: 0.25rem 0.75rem; border-radius: 6px;">Auction by ${bid.Owner_Club}</span>
+                </div>
+                <span class="badge" style="background: ${bid.Status === 'Active' ? '#E6F7FF' : bid.Status === 'Won' ? '#E6FFE6' : '#FFE6E6'}; color: ${bid.Status === 'Active' ? '#0066CC' : bid.Status === 'Won' ? '#00AA00' : '#CC0000'}; padding: 0.25rem 0.75rem; border-radius: 6px;">${bid.Status}</span>
+            </div>
+            
+            <div style="margin: 1rem 0;">
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
+                    <span style="color: var(--gray-600);">Your Bid</span>
+                    <span style="font-weight: 600; color: #FFD700; font-size: 1.25rem;">${Math.floor(bid.Bid_Amount)} Coins</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
+                    <span style="color: var(--gray-600);">Bid Time</span>
+                    <span style="font-weight: 600;">${new Date(bid.Bid_Time).toLocaleString()}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                    <span style="color: var(--gray-600);">Auction Status</span>
+                    <span style="font-weight: 600;">${bid.Auction_Status}</span>
+                </div>
+            </div>
+        </div>
+    `).join('') + '</div>';
+}
+
+function populateBiddingEquipmentSelect() {
+    const select = document.getElementById('auctionEquipment');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Select equipment...</option>';
+    
+    // Filter equipment owned by current club
+    const myEquipment = equipmentData.filter(e => e.Owner_Club_ID == currentBiddingClubId);
+    
+    myEquipment.forEach(equip => {
+        const option = document.createElement('option');
+        option.value = equip.Equip_ID;
+        option.textContent = `${equip.Name} (${equip.Type})`;
+        select.appendChild(option);
+    });
+}
+
+function openCreateAuctionModal() {
+    populateBiddingEquipmentSelect();
+    document.getElementById('createAuctionModal').style.display = 'flex';
+}
+
+function closeCreateAuctionModal() {
+    document.getElementById('createAuctionModal').style.display = 'none';
+}
+
+document.getElementById('createAuctionForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const equipId = document.getElementById('auctionEquipment').value;
+    const startingPrice = document.getElementById('startingPrice').value;
+    const duration = document.getElementById('auctionDuration').value;
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'create_auction');
+        formData.append('equip_id', equipId);
+        formData.append('starting_price', startingPrice);
+        formData.append('duration_hours', duration);
+        
+        const response = await fetch('backend/bidding_api.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Auction created successfully!');
+            closeCreateAuctionModal();
+            document.getElementById('createAuctionForm').reset();
+            loadBiddingActiveAuctions();
+        } else {
+            alert(data.message || 'Failed to create auction');
+        }
+    } catch (error) {
+        console.error('Error creating auction:', error);
+        alert('An error occurred while creating auction');
+    }
+});
+
+async function cancelBiddingAuction(auctionId) {
+    if (!confirm('Are you sure you want to cancel this auction?')) return;
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'cancel_auction');
+        formData.append('auction_id', auctionId);
+        formData.append('club_id', currentBiddingClubId);
+        
+        const response = await fetch('backend/bidding_api.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Auction cancelled');
+            loadMyBiddingAuctions();
+            loadBiddingActiveAuctions();
+        } else {
+            alert(data.message || 'Failed to cancel auction');
+        }
+    } catch (error) {
+        console.error('Error cancelling auction:', error);
+    }
+}
