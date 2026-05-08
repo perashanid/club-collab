@@ -26,7 +26,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
 
     try {
         // Send the data to your backend
-        const response = await fetch('backend/students_api.php', {
+        const response = await fetch('backend/students.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newStudentData)

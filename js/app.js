@@ -108,6 +108,12 @@ function bindHeaderButtons() {
     
     // Add Membership button
     document.getElementById('addMembershipBtn')?.addEventListener('click', addMembership);
+    
+    // Add Volunteer Log button
+    document.getElementById('addVolunteerLogBtn')?.addEventListener('click', addVolunteerLog);
+    
+    // Add Volunteer button
+    document.getElementById('addVolunteerBtn')?.addEventListener('click', addVolunteer);
 }
 
 function bindSearch() {
@@ -1131,11 +1137,14 @@ function handleFormSubmit(e) {
     const id = form.dataset.id;
     const endpoint = form.dataset.endpoint;
     const method = form.dataset.method;
+    const action = form.dataset.action;
 
-    // Build URL with id only if it exists
+    // Build URL with id or action
     let url = `backend/${endpoint}`;
     if (id) {
         url += `?id=${id}`;
+    } else if (action) {
+        url += `?action=${action}`;
     }
 
     // Submit to backend
@@ -1152,9 +1161,9 @@ function handleFormSubmit(e) {
             closeModal();
             // Refresh data
             fetchAllData();
-            alert('Item updated successfully!');
+            alert(result.message || 'Item updated successfully!');
         } else {
-            alert('Error: ' + (result.error || 'Unknown error'));
+            alert('Error: ' + (result.message || result.error || 'Unknown error'));
         }
     })
     .catch(error => {
@@ -1218,6 +1227,10 @@ function addEquipment() {
         return;
     }
 
+    // Get user's club name for display
+    const userClub = clubsData.find(c => c.Club_ID == currentUser.Club_ID);
+    const clubName = userClub ? userClub.Name : 'Your Club';
+
     // Open modal for adding new equipment
     const formHtml = `
         <div class="form-row">
@@ -1248,8 +1261,9 @@ function addEquipment() {
                 </select>
             </div>
             <div class="form-group">
-                <label>Owner Club ID</label>
-                <input type="number" name="owner_club_id" required>
+                <label>Owner Club</label>
+                <input type="text" value="${clubName}" disabled style="background: var(--gray-100); color: var(--gray-600);">
+                <input type="hidden" name="owner_club_id" value="${currentUser.Club_ID || 1}">
             </div>
         </div>
         <div class="form-row">
@@ -2081,6 +2095,150 @@ function addMembership() {
     document.getElementById('crudModal').style.display = 'flex';
 }
 
+// ===== ADD VOLUNTEER LOG FUNCTION =====
+function addVolunteerLog() {
+    const formHtml = `
+        <div class="form-row">
+            <div class="form-group">
+                <label>Student</label>
+                <select name="student_id" required>
+                    <option value="">Select Student</option>
+                    ${studentsData.map(s => `<option value="${s.Student_ID}">${s.StudentName}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Event</label>
+                <select name="event_id" required>
+                    <option value="">Select Event</option>
+                    ${eventsData.map(e => `<option value="${e.Event_ID}">${e.Title} - ${e.Date}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Role</label>
+                <input type="text" name="role" placeholder="e.g., Setup Crew, Registration, MC" required>
+            </div>
+            <div class="form-group">
+                <label>Hours Worked</label>
+                <input type="number" name="hours_worked" step="0.5" min="0.5" max="24" placeholder="e.g., 3.5" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Verified By (Executive)</label>
+                <select name="verified_by">
+                    <option value="">Not Verified Yet</option>
+                    ${studentsData.filter(s => s.Position).map(s => `<option value="${s.Student_ID}">${s.StudentName} (${s.Position})</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Verification Date</label>
+                <input type="date" name="verification_date">
+            </div>
+        </div>
+        <div style="padding: 1rem; background: var(--gray-50); border-radius: 8px; margin-top: 1rem;">
+            <p style="margin: 0; color: var(--gray-600); font-size: 0.875rem;">
+                <i class="fa-solid fa-info-circle"></i> 
+                Logging volunteer hours will automatically:
+            </p>
+            <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--gray-600); font-size: 0.875rem;">
+                <li>Update the volunteer leaderboard</li>
+                <li>Award 10 coins per hour to the student's club</li>
+                <li>Check for badge eligibility and auto-award badges</li>
+            </ul>
+        </div>
+    `;
+
+    document.getElementById('crudForm').innerHTML = formHtml;
+    document.getElementById('crudForm').dataset.section = 'volunteers';
+    document.getElementById('crudForm').dataset.endpoint = 'volunteers_api.php';
+    document.getElementById('crudForm').dataset.method = 'POST';
+    document.getElementById('crudForm').dataset.action = 'create_volunteer_log';
+
+    document.getElementById('modalTitle').textContent = 'Log Volunteer Hours';
+    document.getElementById('crudModal').style.display = 'flex';
+}
+
+// ===== ADD VOLUNTEER (STUDENT) FUNCTION =====
+function addVolunteer() {
+    const formHtml = `
+        <div class="form-row">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" placeholder="Full Name" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" placeholder="student@example.edu" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Default: volunteer123" value="volunteer123" required>
+            </div>
+            <div class="form-group">
+                <label>Contact No</label>
+                <input type="text" name="contact_no" placeholder="+1234567890" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Street</label>
+                <input type="text" name="street" placeholder="123 Main St" required>
+            </div>
+            <div class="form-group">
+                <label>City</label>
+                <input type="text" name="city" placeholder="City Name" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Zip</label>
+                <input type="text" name="zip" placeholder="12345" required>
+            </div>
+            <div class="form-group">
+                <label>Year of Study</label>
+                <select name="year_of_study" required>
+                    <option value="1">Year 1</option>
+                    <option value="2">Year 2</option>
+                    <option value="3">Year 3</option>
+                    <option value="4">Year 4</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Major</label>
+                <input type="text" name="major" placeholder="e.g., Computer Science" required>
+            </div>
+            <div class="form-group">
+                <label>Assign to Club (Optional)</label>
+                <select name="club_id">
+                    <option value="">No Club Assignment</option>
+                    ${clubsData.map(c => `<option value="${c.Club_ID}">${c.Name}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+        <input type="hidden" name="student_type" value="general">
+        <div style="padding: 1rem; background: var(--gray-50); border-radius: 8px; margin-top: 1rem;">
+            <p style="margin: 0; color: var(--gray-600); font-size: 0.875rem;">
+                <i class="fa-solid fa-info-circle"></i> 
+                This will create a new student account that can volunteer for events. If you assign them to a club, they'll automatically become a member.
+            </p>
+        </div>
+    `;
+
+    document.getElementById('crudForm').innerHTML = formHtml;
+    document.getElementById('crudForm').dataset.section = 'students';
+    document.getElementById('crudForm').dataset.endpoint = 'students_api.php';
+    document.getElementById('crudForm').dataset.method = 'POST';
+
+    document.getElementById('modalTitle').textContent = 'Add New Volunteer';
+    document.getElementById('crudModal').style.display = 'flex';
+}
+
 
 // ===== FILTER FUNCTIONS =====
 function initializeFilters() {
@@ -2260,6 +2418,13 @@ let currentBiddingClubId = 1; // Default to first club
 let biddingEquipment = [];
 
 async function loadBiddingData() {
+    // Set club ID from current user
+    if (currentUser && currentUser.Club_ID) {
+        currentBiddingClubId = currentUser.Club_ID;
+    } else {
+        currentBiddingClubId = 1; // Fallback to first club
+    }
+    
     await loadBiddingClubBalance();
     await loadBiddingActiveAuctions();
     await loadBiddingClubLeaderboard();
@@ -2284,28 +2449,44 @@ async function loadBiddingActiveAuctions() {
         const response = await fetch('backend/bidding_api.php?action=get_active_auctions');
         const data = await response.json();
         
+        console.log('Active auctions data:', data);
+        
         if (data.success) {
             document.getElementById('biddingActiveCount').textContent = data.auctions.length;
             displayBiddingActiveAuctions(data.auctions);
+        } else {
+            console.error('Failed to load auctions:', data);
+            displayBiddingActiveAuctions([]);
         }
     } catch (error) {
         console.error('Error loading auctions:', error);
+        displayBiddingActiveAuctions([]);
     }
 }
 
 function displayBiddingActiveAuctions(auctions) {
     const grid = document.getElementById('activeAuctionsGrid');
     
+    console.log('displayBiddingActiveAuctions called with:', auctions);
+    console.log('Grid element:', grid);
+    
+    if (!grid) {
+        console.error('activeAuctionsGrid element not found!');
+        return;
+    }
+    
     if (!auctions || auctions.length === 0) {
         grid.innerHTML = '<p style="text-align: center; color: var(--gray-600); padding: 2rem; grid-column: 1/-1;">No active auctions at the moment.</p>';
         return;
     }
     
+    console.log('Rendering', auctions.length, 'auctions');
+    
     grid.innerHTML = auctions.map(auction => {
         const hoursRemaining = parseInt(auction.Hours_Remaining);
         const isUrgent = hoursRemaining < 2;
         const minBid = auction.Current_Highest_Bid ? parseFloat(auction.Current_Highest_Bid) + 10 : parseFloat(auction.Starting_Price);
-        const clubName = clubs.find(c => c.Club_ID == currentBiddingClubId)?.Name || '';
+        const clubName = clubsData.find(c => c.Club_ID == currentBiddingClubId)?.Name || '';
         const isMyAuction = auction.Owner_Club === clubName;
         
         return `
@@ -2400,6 +2581,7 @@ async function placeBiddingBid(auctionId) {
             bidInput.value = '';
             loadBiddingActiveAuctions();
             loadBiddingClubBalance();
+            loadMyBiddingBids(); // Update My Bids count
         } else {
             alert(data.message || 'Failed to place bid');
         }
@@ -2550,36 +2732,36 @@ function displayMyBiddingAuctions(auctions) {
     }
     
     grid.innerHTML = auctions.map(auction => `
-        <div class="card" style="padding: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                <div>
-                    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">${auction.Equipment_Name}</h3>
-                    <span class="badge" style="background: var(--gray-100); padding: 0.25rem 0.75rem; border-radius: 6px;">${auction.Type}</span>
+        <div class="card" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                <div style="flex: 1; min-width: 0;">
+                    <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; word-wrap: break-word;">${auction.Equipment_Name}</h3>
+                    <span class="badge" style="background: var(--gray-100); padding: 0.25rem 0.75rem; border-radius: 6px; display: inline-block;">${auction.Type}</span>
                 </div>
-                <span class="badge" style="background: ${auction.Status === 'Active' ? '#E6F7FF' : '#FFE6E6'}; color: ${auction.Status === 'Active' ? '#0066CC' : '#CC0000'}; padding: 0.25rem 0.75rem; border-radius: 6px;">${auction.Status}</span>
+                <span class="badge" style="background: ${auction.Status === 'Active' ? '#E6F7FF' : '#FFE6E6'}; color: ${auction.Status === 'Active' ? '#0066CC' : '#CC0000'}; padding: 0.25rem 0.75rem; border-radius: 6px; white-space: nowrap;">${auction.Status}</span>
             </div>
             
-            <div style="margin: 1rem 0;">
-                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
-                    <span style="color: var(--gray-600);">Current Bid</span>
-                    <span style="font-weight: 600; color: #FFD700; font-size: 1.25rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100); gap: 1rem;">
+                    <span style="color: var(--gray-600); white-space: nowrap;">Current Bid</span>
+                    <span style="font-weight: 600; color: #FFD700; font-size: 1.25rem; text-align: right;">
                         ${auction.Current_Highest_Bid ? Math.floor(auction.Current_Highest_Bid) + ' Coins' : 'No bids'}
                     </span>
                 </div>
                 ${auction.Highest_Bidder_Club ? `
-                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100);">
-                    <span style="color: var(--gray-600);">Leading Bidder</span>
-                    <span style="font-weight: 600;">${auction.Highest_Bidder_Club}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100); gap: 1rem;">
+                    <span style="color: var(--gray-600); white-space: nowrap;">Leading Bidder</span>
+                    <span style="font-weight: 600; text-align: right; word-wrap: break-word;">${auction.Highest_Bidder_Club}</span>
                 </div>
                 ` : ''}
-                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
-                    <span style="color: var(--gray-600);">Ends</span>
-                    <span style="font-weight: 600;">${new Date(auction.Auction_End).toLocaleString()}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; gap: 1rem;">
+                    <span style="color: var(--gray-600); white-space: nowrap;">Ends</span>
+                    <span style="font-weight: 600; text-align: right; font-size: 0.875rem;">${new Date(auction.Auction_End).toLocaleString()}</span>
                 </div>
             </div>
             
             ${auction.Status === 'Active' ? `
-            <button onclick="cancelBiddingAuction(${auction.Auction_ID})" class="btn-secondary" style="width: 100%; margin-top: 1rem; background: #CC0000; color: white;">
+            <button onclick="cancelBiddingAuction(${auction.Auction_ID})" class="btn-secondary" style="width: 100%; padding: 0.75rem; background: #CC0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                 Cancel Auction
             </button>
             ` : ''}
@@ -2649,7 +2831,7 @@ function populateBiddingEquipmentSelect() {
     myEquipment.forEach(equip => {
         const option = document.createElement('option');
         option.value = equip.Equip_ID;
-        option.textContent = `${equip.Name} (${equip.Type})`;
+        option.textContent = `${equip.EquipName} (${equip.Type})`;
         select.appendChild(option);
     });
 }

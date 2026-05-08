@@ -158,6 +158,12 @@ function placeBid($conn) {
             return;
         }
         
+        // Mark previous active bids as outbid
+        $sql = "UPDATE Bid_History SET Status = 'Outbid' WHERE Auction_ID = ? AND Status = 'Active'";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $auction_id);
+        $stmt->execute();
+        
         // Place bid
         $sql = "INSERT INTO Bid_History (Auction_ID, Club_ID, Bid_Amount) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql);

@@ -92,6 +92,16 @@ switch ($method) {
                 if (!mysqli_stmt_execute($stmt4)) throw new Exception(mysqli_error($conn));
                 mysqli_stmt_close($stmt4);
             }
+            
+            // Add club membership if club_id is provided
+            if (isset($input['club_id']) && !empty($input['club_id'])) {
+                $stmt5 = mysqli_prepare($conn, "INSERT INTO Membership (Student_ID, Club_ID, Role, Join_Date) VALUES (?, ?, 'Volunteer', CURDATE())");
+                if (!$stmt5) throw new Exception(mysqli_error($conn));
+                
+                mysqli_stmt_bind_param($stmt5, "ii", $studentId, $input['club_id']);
+                if (!mysqli_stmt_execute($stmt5)) throw new Exception(mysqli_error($conn));
+                mysqli_stmt_close($stmt5);
+            }
 
             mysqli_commit($conn);
             echo json_encode(["success" => true, "id" => $studentId]);

@@ -57,9 +57,19 @@ if (!empty($user['Position'])) {
     $role = 'admin'; // Executives have admin access
 }
 
+// Get user's primary club (first club they're a member of)
+$clubSql = "SELECT Club_ID FROM Membership WHERE Student_ID = ? ORDER BY Join_Date ASC LIMIT 1";
+$clubStmt = mysqli_prepare($conn, $clubSql);
+mysqli_stmt_bind_param($clubStmt, "i", $user['Student_ID']);
+mysqli_stmt_execute($clubStmt);
+$clubResult = mysqli_stmt_get_result($clubStmt);
+$clubData = mysqli_fetch_assoc($clubResult);
+mysqli_stmt_close($clubStmt);
+
 // Return user data (exclude password)
 unset($user['Password']);
 $user['role'] = $role;
+$user['Club_ID'] = $clubData ? $clubData['Club_ID'] : null;
 
 echo json_encode([
     "success" => true,

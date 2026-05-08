@@ -561,21 +561,22 @@ tbody tr:hover {
 }
 
 /* ===== LEADERBOARD ===== */
-#leaderboardTable tbody tr:nth-child(1) {
-    background: var(--black);
-    color: var(--white);
+#leaderboardTable tbody tr:nth-child(1),
+#leaderboardTableMain tbody tr:nth-child(1) {
+    background: var(--gray-100);
     font-weight: 600;
 }
 
-#leaderboardTable tbody tr:nth-child(2) {
-    background: var(--gray-800);
-    color: var(--white);
+#leaderboardTable tbody tr:nth-child(2),
+#leaderboardTableMain tbody tr:nth-child(2) {
+    background: var(--gray-50);
     font-weight: 600;
 }
 
-#leaderboardTable tbody tr:nth-child(3) {
-    background: var(--gray-700);
-    color: var(--white);
+#leaderboardTable tbody tr:nth-child(3),
+#leaderboardTableMain tbody tr:nth-child(3) {
+    background: var(--white);
+    font-weight: 600;
     font-weight: 600;
 }
 
@@ -940,4 +941,64 @@ th:hover i.fa-sort {
 .rank-medal {
     font-size: 1.25rem;
     margin-right: 0.5rem;
+}
+
+
+/* ===== BIDDING SECTION FIXES ===== */
+.bidding-content .card {
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+}
+
+.bidding-content .card > div {
+    margin-bottom: 0.75rem;
+}
+
+.bidding-content .card h3 {
+    margin-bottom: 0.5rem;
+    word-wrap: break-word;
+}
+
+.bidding-content .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--gray-100);
+    gap: 1rem;
+}
+
+.bidding-content .info-label {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    min-width: 100px;
+}
+
+.bidding-content .info-value {
+    font-weight: 600;
+    color: var(--gray-900);
+    text-align: right;
+    word-wrap: break-word;
+}
+
+.bidding-content .badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.bidding-content .btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-900);
+    border: 1px solid var(--gray-300);
+}
+
+.bidding-content .btn-secondary:hover {
+    background: var(--gray-200);
 }
